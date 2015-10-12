@@ -1,0 +1,25 @@
+{
+  "name": "beeserver",
+  "version": "1.0.1",
+  "description": "bee server",
+  "main": "s.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://freegameproject@github.com/freegameproject/beeServer.git"
+  },
+  "keywords": [
+    "beeserver"
+  ],
+  "author": "freegameproject",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/freegameproject/beeServer/issues"
+  },
+  "homepage": "https://github.com/freegameproject/beeServer#readme",
+  "dependencies": {
+    "mongodb": "^2.0.45"
+  }
+}

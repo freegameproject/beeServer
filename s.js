@@ -2,16 +2,105 @@ var http = require('http');
 var net = require('net');
 var url = require('url');
 var fs = require('fs');
+MongoClient = require('mongodb').MongoClient;
+var assert = require('assert');
+var ObjectId = require('mongodb').ObjectID;
+mongoUrl = 'mongodb://localhost:27017/c';
 //config begin
 var port=10000;
 //config end
-data='';//file_content
-setValue=function(value_obj){
-    for(var key in value_obj){
-        data=data.toString().replace('{{'+key+'}}',value_obj[key]);
-    }
-}
+insertDocument = function(db,table,obj,callback) {
+   db.collection(table).insertOne(obj, function(err, result) {
+    assert.equal(err, null);
+    console.log("Inserted a document into the restaurants collection.");
+    callback(result);
+  });
+};
+
+findOne = function(db,table,obj,callback) {
+	db.collection(table).find(obj).toArray(function (err, docs) {
+        if(docs[0]==undefined){
+            callback('err',docs[0]);
+        }else{
+            callback(false,docs[0]);
+        }             
+    });
+};
+
+findRestaurants = function(db,table,obj,callback) {
+    //var cursor =db.collection(table).find(obj);
+
+	db.collection(table).find(obj).toArray(function (err, docs) {
+        callback(docs);                        
+    });
+	/*
+    cursor.each(function(err, doc) {
+      assert.equal(err, null);
+      if (doc != null) {
+         //console.dir(doc);
+         
+      } else {
+         
+      }
+
+   });
+*/
+};
+
+updateRestaurantsOne = function(db,table,id,obj,callback) {
+   db.collection(table).updateOne(
+   { _id: id },
+   {
+     $currentDate: {
+        lastModified: true,
+        "cancellation.date": { $type: "timestamp" }
+     },
+     $set: obj
+   }, function(err, results) {
+      console.log(results);
+      callback();
+   });
+};
+
+updateRestaurantsAll = function(db,table,query,obj,callback) {
+   db.collection(table).updateOne(
+   query,
+   {
+     $currentDate: {
+        lastModified: true,
+        "cancellation.date": { $type: "timestamp" }
+     },
+     $set: obj
+   }, function(err, results) {
+      console.log(results);
+      callback();
+   });
+};
+
+removeRestaurants = function(db,table,obj,callback) {
+   db.collection(table).deleteMany(
+      obj,
+      function(err, results) {
+         console.log(results);
+         callback();
+      }
+   );
+};
 var server = http.createServer(function (req, res) {
+    //增加渲染方法
+    res.r=function(value_obj){
+        console.log(res.d);
+        for(var key in value_obj){
+            res.d=res.d.toString().replace('{{'+key+'}}',value_obj[key]);
+        }
+        res.write(res.d);
+        res.end();
+    }
+    res.re=function(res,err){
+        res.write('error:'+err);
+        res.end();
+    }
+    //增加渲染结束
     var view=req.url.split('/')[1].split('?')[0];//视图和控制器
     var headerType='text/html';//默认是网页
     console.log('view:'+view);
@@ -95,8 +184,9 @@ var server = http.createServer(function (req, res) {
             q[arr[0]]=arr[1];
         });
     }
+    req.q=q;//增加参数
     console.dir(q);
-    fs.readFile(file,function(err, d){
+    fs.readFile(file,function(err, data){
         console.dir(req.url);
         if(err){
             res.statusCode = 404;
@@ -105,20 +195,22 @@ var server = http.createServer(function (req, res) {
             res.end();
             console.log('err');
         }else{ 
-            data=d;
+            res.d=data;
+            res.statusCode = 200;
+            res.setHeader("Content-Type",headerType);
             if(view!='static'){
                 //交给控制器
                 var act = require('./action/'+view);
-                act.run(req,res,q);
+                console.log('load action')
+                act.run(req,res);
                 //控制器结束
+            }else{
+                res.write(data);
+                res.end();
             }
-            res.statusCode = 200;
-            res.setHeader("Content-Type",headerType);
-            res.write(data);
             //console.log(data);
             //<Buffer...
         }
-        res.end();
     });
 });
 server.listen(port, '127.0.0.1');

@@ -3,5 +3,5 @@ module.exports.run = function(req,res){
     var url=req.url;
     var headers=req.headers;
     var ua=headers['user-agent'];
-    setValue({ua:ua,req:url});
+    res.r({ua:ua,req:url});
 }
