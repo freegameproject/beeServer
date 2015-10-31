@@ -31,7 +31,11 @@ findRestaurants = function(db,table,obj,callback) {
     //var cursor =db.collection(table).find(obj);
 
 	db.collection(table).find(obj).toArray(function (err, docs) {
-        callback(docs);                        
+        if(docs==undefined){
+            callback('err',docs);
+        }else{
+            callback(false,docs);
+        }                        
     });
 	/*
     cursor.each(function(err, doc) {
